@@ -8,9 +8,9 @@ from scipy.signal import butter, freqz, filtfilt
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 logger = logging.getLogger("loo_pipeline")
 
-FOLDER_0      = r"C:\abalaji\bichat\ORIGINAL_DATA\chunks_20\0"
-FOLDER_1      = r"C:\abalaji\bichat\ORIGINAL_DATA\chunks_20\1"
-OUTPUT_DIR    = r"C:\abalaji\bichat\PROCESSED_LOO"
+FOLDER_0      = r"D:\abalaji\chunks\0"
+FOLDER_1      = r"D:\abalaji\chunks\1"
+OUTPUT_DIR    = r"D:\abalaji\PROCESSED_LOO_60"
 
 FILTER_ORDER  = 4
 FILTER_CUTOFF = 100.0
