@@ -12,12 +12,12 @@ from imblearn.over_sampling import SMOTE
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 logger = logging.getLogger("rf_loo")
 
-TRAIN_DIR    = r"C:\abalaji\bichat\PROCESSED_LOO\0"
-TEST_DIR     = r"C:\abalaji\bichat\PROCESSED_LOO\1"
-OUTPUT_DIR   = r"C:\abalaji\bichat\PROCESSED_LOO\results"
+TRAIN_DIR  = r"D:\abalaji\PROCESSED_LOO\0"
+TEST_DIR   = r"D:\abalaji\PROCESSED_LOO\1"
+OUTPUT_DIR = r"D:\abalaji\PROCESSED_LOO\results"
 LABEL_COL    = "label"
-HPO_N_FOLDS  = 25
-HPO_CV       = 3
+HPO_N_FOLDS  = 50
+HPO_CV       = 5
 RANDOM_SEED  = 42
 
 

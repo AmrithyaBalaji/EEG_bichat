@@ -1,0 +1,290 @@
+11:56:47 [INFO] Found 95 folds.
+11:56:47 [INFO]
+############################################################
+# RUN: SMOTE=False  REMOVE_OUTLIERS=False
+############################################################
+11:56:47 [INFO]
+Phase 1: Grid search on 25 randomly selected folds …
+11:56:47 [INFO]   [1/25] HPO fold: 1214
+11:57:12 [INFO]     Best CV: 0.7330  Params: {'max_depth': 5, 'max_features': 'log2', 'min_samples_leaf': 2, 'min_samples_split': 5, 'n_estimators': 100}
+11:57:12 [INFO]   [2/25] HPO fold: 8064
+11:57:33 [INFO]     Best CV: 0.7367  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 300}
+11:57:33 [INFO]   [3/25] HPO fold: 8099
+11:57:57 [INFO]     Best CV: 0.7324  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 300}
+11:57:57 [INFO]   [4/25] HPO fold: 8102
+11:58:19 [INFO]     Best CV: 0.7330  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 10, 'n_estimators': 300}
+11:58:19 [INFO]   [5/25] HPO fold: 8127
+11:58:42 [INFO]     Best CV: 0.7356  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100}
+11:58:42 [INFO]   [6/25] HPO fold: 8133
+11:59:04 [INFO]     Best CV: 0.7330  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 10, 'n_estimators': 100}
+11:59:04 [INFO]   [7/25] HPO fold: 8158
+11:59:26 [INFO]     Best CV: 0.7324  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 10, 'n_estimators': 100}
+11:59:26 [INFO]   [8/25] HPO fold: 8173
+11:59:49 [INFO]     Best CV: 0.7319  Params: {'max_depth': 5, 'max_features': 'log2', 'min_samples_leaf': 2, 'min_samples_split': 5, 'n_estimators': 100}
+11:59:49 [INFO]   [9/25] HPO fold: 8192
+12:00:11 [INFO]     Best CV: 0.7473  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:00:11 [INFO]   [10/25] HPO fold: 8194
+12:00:35 [INFO]     Best CV: 0.7442  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 500}
+12:00:35 [INFO]   [11/25] HPO fold: 8210
+12:00:58 [INFO]     Best CV: 0.7346  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+12:00:58 [INFO]   [12/25] HPO fold: 8250
+12:01:20 [INFO]     Best CV: 0.7388  Params: {'max_depth': 5, 'max_features': 'log2', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:01:20 [INFO]   [13/25] HPO fold: 8251
+12:01:43 [INFO]     Best CV: 0.7282  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 300}
+12:01:43 [INFO]   [14/25] HPO fold: 8257
+12:02:06 [INFO]     Best CV: 0.7277  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+12:02:06 [INFO]   [15/25] HPO fold: 8267
+12:02:29 [INFO]     Best CV: 0.7298  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+12:02:29 [INFO]   [16/25] HPO fold: 8275
+12:02:51 [INFO]     Best CV: 0.7426  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 100}
+12:02:51 [INFO]   [17/25] HPO fold: 8298
+12:03:16 [INFO]     Best CV: 0.7420  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 500}
+12:03:16 [INFO]   [18/25] HPO fold: 8469
+12:03:44 [INFO]     Best CV: 0.7293  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 10, 'n_estimators': 100}
+12:03:44 [INFO]   [19/25] HPO fold: 8500
+12:04:11 [INFO]     Best CV: 0.7314  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100}
+12:04:11 [INFO]   [20/25] HPO fold: 8567
+12:04:35 [INFO]     Best CV: 0.7277  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 4, 'min_samples_split': 10, 'n_estimators': 200}
+12:04:35 [INFO]   [21/25] HPO fold: 8575
+12:04:57 [INFO]     Best CV: 0.7335  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:04:58 [INFO]   [22/25] HPO fold: 8625
+12:05:20 [INFO]     Best CV: 0.7309  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:05:20 [INFO]   [23/25] HPO fold: 8635
+12:05:45 [INFO]     Best CV: 0.7394  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 10, 'n_estimators': 500}
+12:05:45 [INFO]   [24/25] HPO fold: 8656
+12:06:09 [INFO]     Best CV: 0.7319  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:06:09 [INFO]   [25/25] HPO fold: 8712
+12:06:32 [INFO]     Best CV: 0.7340  Params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100}
+12:06:32 [INFO]
+  Consensus best params: {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:06:32 [INFO]
+Phase 2: Training all 95 folds with consensus params …
+12:06:32 [INFO]   [1/95] Fold: 1214
+12:06:32 [INFO]     Test accuracy: 1.0000
+12:06:32 [INFO]   [2/95] Fold: 5160
+12:06:32 [INFO]     Test accuracy: 0.1000
+12:06:32 [INFO]   [3/95] Fold: 8058
+12:06:32 [INFO]     Test accuracy: 1.0000
+12:06:32 [INFO]   [4/95] Fold: 8063
+12:06:32 [INFO]     Test accuracy: 1.0000
+12:06:32 [INFO]   [5/95] Fold: 8064
+12:06:33 [INFO]     Test accuracy: 0.0000
+12:06:33 [INFO]   [6/95] Fold: 8067
+12:06:33 [INFO]     Test accuracy: 1.0000
+12:06:33 [INFO]   [7/95] Fold: 8093
+12:06:33 [INFO]     Test accuracy: 0.0000
+12:06:33 [INFO]   [8/95] Fold: 8094
+12:06:33 [INFO]     Test accuracy: 0.0000
+12:06:33 [INFO]   [9/95] Fold: 8097
+12:06:34 [INFO]     Test accuracy: 1.0000
+12:06:34 [INFO]   [10/95] Fold: 8098
+12:06:34 [INFO]     Test accuracy: 1.0000
+12:06:34 [INFO]   [11/95] Fold: 8099
+12:06:34 [INFO]     Test accuracy: 1.0000
+12:06:34 [INFO]   [12/95] Fold: 8101
+12:06:34 [INFO]     Test accuracy: 1.0000
+12:06:34 [INFO]   [13/95] Fold: 8102
+12:06:35 [INFO]     Test accuracy: 1.0000
+12:06:35 [INFO]   [14/95] Fold: 8112
+12:06:35 [INFO]     Test accuracy: 1.0000
+12:06:35 [INFO]   [15/95] Fold: 8113
+12:06:35 [INFO]     Test accuracy: 1.0000
+12:06:35 [INFO]   [16/95] Fold: 8127
+12:06:35 [INFO]     Test accuracy: 1.0000
+12:06:35 [INFO]   [17/95] Fold: 8128
+12:06:36 [INFO]     Test accuracy: 0.0000
+12:06:36 [INFO]   [18/95] Fold: 8132
+12:06:36 [INFO]     Test accuracy: 1.0000
+12:06:36 [INFO]   [19/95] Fold: 8133
+12:06:36 [INFO]     Test accuracy: 1.0000
+12:06:36 [INFO]   [20/95] Fold: 8153
+12:06:36 [INFO]     Test accuracy: 1.0000
+12:06:36 [INFO]   [21/95] Fold: 8154
+12:06:37 [INFO]     Test accuracy: 0.0000
+12:06:37 [INFO]   [22/95] Fold: 8157
+12:06:37 [INFO]     Test accuracy: 1.0000
+12:06:37 [INFO]   [23/95] Fold: 8158
+12:06:37 [INFO]     Test accuracy: 1.0000
+12:06:37 [INFO]   [24/95] Fold: 8159
+12:06:37 [INFO]     Test accuracy: 1.0000
+12:06:37 [INFO]   [25/95] Fold: 8165
+12:06:37 [INFO]     Test accuracy: 1.0000
+12:06:37 [INFO]   [26/95] Fold: 8166
+12:06:38 [INFO]     Test accuracy: 1.0000
+12:06:38 [INFO]   [27/95] Fold: 8173
+12:06:38 [INFO]     Test accuracy: 1.0000
+12:06:38 [INFO]   [28/95] Fold: 8174
+12:06:38 [INFO]     Test accuracy: 0.0000
+12:06:38 [INFO]   [29/95] Fold: 8192
+12:06:38 [INFO]     Test accuracy: 0.0000
+12:06:38 [INFO]   [30/95] Fold: 8193
+12:06:39 [INFO]     Test accuracy: 1.0000
+12:06:39 [INFO]   [31/95] Fold: 8194
+12:06:39 [INFO]     Test accuracy: 0.0000
+12:06:39 [INFO]   [32/95] Fold: 8201
+12:06:39 [INFO]     Test accuracy: 1.0000
+12:06:39 [INFO]   [33/95] Fold: 8204
+12:06:39 [INFO]     Test accuracy: 0.0000
+12:06:39 [INFO]   [34/95] Fold: 8210
+12:06:40 [INFO]     Test accuracy: 0.7500
+12:06:40 [INFO]   [35/95] Fold: 8213
+12:06:40 [INFO]     Test accuracy: 1.0000
+12:06:40 [INFO]   [36/95] Fold: 8217
+12:06:40 [INFO]     Test accuracy: 0.0000
+12:06:40 [INFO]   [37/95] Fold: 8227
+12:06:40 [INFO]     Test accuracy: 0.0000
+12:06:40 [INFO]   [38/95] Fold: 8228
+12:06:41 [INFO]     Test accuracy: 0.0000
+12:06:41 [INFO]   [39/95] Fold: 8243
+12:06:41 [INFO]     Test accuracy: 1.0000
+12:06:41 [INFO]   [40/95] Fold: 8250
+12:06:41 [INFO]     Test accuracy: 0.0000
+12:06:41 [INFO]   [41/95] Fold: 8251
+12:06:41 [INFO]     Test accuracy: 1.0000
+12:06:41 [INFO]   [42/95] Fold: 8254
+12:06:41 [INFO]     Test accuracy: 0.8500
+12:06:41 [INFO]   [43/95] Fold: 8257
+12:06:42 [INFO]     Test accuracy: 1.0000
+12:06:42 [INFO]   [44/95] Fold: 8263
+12:06:42 [INFO]     Test accuracy: 1.0000
+12:06:42 [INFO]   [45/95] Fold: 8264
+12:06:42 [INFO]     Test accuracy: 1.0000
+12:06:42 [INFO]   [46/95] Fold: 8267
+12:06:42 [INFO]     Test accuracy: 1.0000
+12:06:42 [INFO]   [47/95] Fold: 8268
+12:06:43 [INFO]     Test accuracy: 0.8000
+12:06:43 [INFO]   [48/95] Fold: 8275
+12:06:43 [INFO]     Test accuracy: 0.0000
+12:06:43 [INFO]   [49/95] Fold: 8279
+12:06:43 [INFO]     Test accuracy: 0.0000
+12:06:43 [INFO]   [50/95] Fold: 8280
+12:06:43 [INFO]     Test accuracy: 0.0000
+12:06:43 [INFO]   [51/95] Fold: 8281
+12:06:44 [INFO]     Test accuracy: 0.9500
+12:06:44 [INFO]   [52/95] Fold: 8285
+12:06:44 [INFO]     Test accuracy: 1.0000
+12:06:44 [INFO]   [53/95] Fold: 8286
+12:06:44 [INFO]     Test accuracy: 0.0000
+12:06:44 [INFO]   [54/95] Fold: 8290
+12:06:44 [INFO]     Test accuracy: 0.0000
+12:06:44 [INFO]   [55/95] Fold: 8291
+12:06:45 [INFO]     Test accuracy: 1.0000
+12:06:45 [INFO]   [56/95] Fold: 8298
+12:06:45 [INFO]     Test accuracy: 0.0000
+12:06:45 [INFO]   [57/95] Fold: 8300
+12:06:45 [INFO]     Test accuracy: 0.0000
+12:06:45 [INFO]   [58/95] Fold: 8324
+12:06:45 [INFO]     Test accuracy: 1.0000
+12:06:45 [INFO]   [59/95] Fold: 8325
+12:06:46 [INFO]     Test accuracy: 1.0000
+12:06:46 [INFO]   [60/95] Fold: 8331
+12:06:46 [INFO]     Test accuracy: 1.0000
+12:06:46 [INFO]   [61/95] Fold: 8342
+12:06:46 [INFO]     Test accuracy: 0.0500
+12:06:46 [INFO]   [62/95] Fold: 8374
+12:06:46 [INFO]     Test accuracy: 1.0000
+12:06:46 [INFO]   [63/95] Fold: 8415
+12:06:47 [INFO]     Test accuracy: 1.0000
+12:06:47 [INFO]   [64/95] Fold: 8425
+12:06:47 [INFO]     Test accuracy: 1.0000
+12:06:47 [INFO]   [65/95] Fold: 8438
+12:06:47 [INFO]     Test accuracy: 1.0000
+12:06:47 [INFO]   [66/95] Fold: 8446
+12:06:47 [INFO]     Test accuracy: 1.0000
+12:06:47 [INFO]   [67/95] Fold: 8469
+12:06:47 [INFO]     Test accuracy: 1.0000
+12:06:47 [INFO]   [68/95] Fold: 8477
+12:06:48 [INFO]     Test accuracy: 0.9500
+12:06:48 [INFO]   [69/95] Fold: 8500
+12:06:48 [INFO]     Test accuracy: 0.9000
+12:06:48 [INFO]   [70/95] Fold: 8502
+12:06:48 [INFO]     Test accuracy: 1.0000
+12:06:48 [INFO]   [71/95] Fold: 8551
+12:06:48 [INFO]     Test accuracy: 1.0000
+12:06:48 [INFO]   [72/95] Fold: 8556
+12:06:49 [INFO]     Test accuracy: 1.0000
+12:06:49 [INFO]   [73/95] Fold: 8567
+12:06:49 [INFO]     Test accuracy: 1.0000
+12:06:49 [INFO]   [74/95] Fold: 8575
+12:06:49 [INFO]     Test accuracy: 1.0000
+12:06:49 [INFO]   [75/95] Fold: 8588
+12:06:49 [INFO]     Test accuracy: 1.0000
+12:06:49 [INFO]   [76/95] Fold: 8590
+12:06:50 [INFO]     Test accuracy: 1.0000
+12:06:50 [INFO]   [77/95] Fold: 8592
+12:06:50 [INFO]     Test accuracy: 1.0000
+12:06:50 [INFO]   [78/95] Fold: 8610
+12:06:50 [INFO]     Test accuracy: 1.0000
+12:06:50 [INFO]   [79/95] Fold: 8625
+12:06:50 [INFO]     Test accuracy: 1.0000
+12:06:50 [INFO]   [80/95] Fold: 8635
+12:06:51 [INFO]     Test accuracy: 0.0000
+12:06:51 [INFO]   [81/95] Fold: 8654
+12:06:51 [INFO]     Test accuracy: 1.0000
+12:06:51 [INFO]   [82/95] Fold: 8656
+12:06:51 [INFO]     Test accuracy: 1.0000
+12:06:51 [INFO]   [83/95] Fold: 8679
+12:06:51 [INFO]     Test accuracy: 1.0000
+12:06:51 [INFO]   [84/95] Fold: 8707
+12:06:52 [INFO]     Test accuracy: 1.0000
+12:06:52 [INFO]   [85/95] Fold: 8712
+12:06:52 [INFO]     Test accuracy: 0.8500
+12:06:52 [INFO]   [86/95] Fold: 8713
+12:06:52 [INFO]     Test accuracy: 1.0000
+12:06:52 [INFO]   [87/95] Fold: 8716
+12:06:52 [INFO]     Test accuracy: 1.0000
+12:06:52 [INFO]   [88/95] Fold: 8759
+12:06:52 [INFO]     Test accuracy: 0.0000
+12:06:52 [INFO]   [89/95] Fold: 8789
+12:06:53 [INFO]     Test accuracy: 1.0000
+12:06:53 [INFO]   [90/95] Fold: 8796
+12:06:53 [INFO]     Test accuracy: 1.0000
+12:06:53 [INFO]   [91/95] Fold: 8803
+12:06:53 [INFO]     Test accuracy: 1.0000
+12:06:53 [INFO]   [92/95] Fold: 8812
+12:06:53 [INFO]     Test accuracy: 1.0000
+12:06:53 [INFO]   [93/95] Fold: 8813
+12:06:54 [INFO]     Test accuracy: 1.0000
+12:06:54 [INFO]   [94/95] Fold: 8816
+12:06:54 [INFO]     Test accuracy: 0.0500
+12:06:54 [INFO]   [95/95] Fold: 8858
+12:06:54 [INFO]     Test accuracy: 1.0000
+12:06:54 [INFO]
+==================================================
+12:06:54 [INFO] LOO Results Summary  [smote-False_outliers-False]
+12:06:54 [INFO] ==================================================
+12:06:54 [INFO] Consensus params : {'max_depth': 5, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 2, 'n_estimators': 100}
+12:06:54 [INFO] Mean test accuracy : 0.7289
+12:06:54 [INFO] Std  test accuracy : 0.4351
+12:06:54 [INFO] Min  test accuracy : 0.0000
+12:06:54 [INFO] Max  test accuracy : 1.0000
+12:06:54 [INFO]
+==================================================
+12:06:54 [INFO] Overall Confusion Matrix (all folds combined)
+12:06:54 [INFO] ==================================================
+12:06:54 [INFO]                  Predicted 0   Predicted 1
+12:06:54 [INFO] Actual 0   :           1381            19
+12:06:54 [INFO] Actual 1   :            496             4
+12:06:54 [INFO]
+Class 0  -> total=1400, correct(TN)=1381, misclassified as 1(FP)=19, accuracy=0.9864
+12:06:54 [INFO] Class 1  -> total=500, correct(TP)=4, misclassified as 0(FN)=496, accuracy=0.0080
+12:06:54 [INFO]
+              precision    recall  f1-score   support
+
+           0     0.7357    0.9864    0.8428      1400
+           1     0.1739    0.0080    0.0153       500
+
+    accuracy                         0.7289      1900
+   macro avg     0.4548    0.4972    0.4291      1900
+weighted avg     0.5879    0.7289    0.6251      1900
+
+12:06:56 [INFO] Confusion matrix plot saved → D:\abalaji\PROCESSED_LOO\results\smote-False_outliers-False\overall_confusion_matrix.png
+12:06:57 [INFO] Plot saved → D:\abalaji\PROCESSED_LOO\results\smote-False_outliers-False\loo_rf_results.png
+12:06:57 [INFO]
+==================================================
+Condition comparison
+==================================================
+                          tag  use_smote  remove_outliers  mean_test_accuracy  std_test_accuracy                                        best_params
+0  smote-False_outliers-False      False            False            0.728947           0.435131  {'max_depth': 5, 'max_features': 'sqrt', 'min_...
+12:06:57 [INFO]
+Done.
