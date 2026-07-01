@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import (
     accuracy_score, confusion_matrix, classification_report,
     precision_recall_fscore_support
@@ -15,24 +15,25 @@ from imblearn.over_sampling import SMOTE
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 logger = logging.getLogger("rf_loo")
 
-TRAIN_DIR  = r"D:\abalaji\PROCESSED_LOO\0"
-TEST_DIR   = r"D:\abalaji\PROCESSED_LOO\1"
-OUTPUT_DIR = r"D:\abalaji\PROCESSED_LOO\results"
+TRAIN_DIR  = r"C:\abalaji\bichat\PROCESSED_LOO\0"
+TEST_DIR   = r"C:\abalaji\bichat\PROCESSED_LOO\1"
+OUTPUT_DIR = r"C:\abalaji\bichat\PROCESSED_LOO\results"
 LABEL_COL    = "label"
-HPO_N_FOLDS  = 50
+HPO_N_FOLDS  = 35
 HPO_CV       = 5
+HPO_N_ITER   = 30  # how many random param combinations RandomizedSearchCV tries (out of 288 possible)
 RANDOM_SEED  = 42
 
 
-USE_SMOTE           = True
-REMOVE_OUTLIERS     = True
-RUN_BOTH_CONDITIONS = True
+USE_SMOTE           = False
+REMOVE_OUTLIERS     = False
+RUN_BOTH_CONDITIONS = False
 
 
 OUTLIER_IQR_K        = 1.5
 
 HPO_PARAM_GRID = {
-    "n_estimators":      [100, 200, 300, 500],
+    "n_estimators":      [200, 300, 500, 600],
     "max_depth":         [None, 5, 10, 20],
     "min_samples_split": [2, 5, 10],
     "min_samples_leaf":  [1, 2, 4],
@@ -125,12 +126,14 @@ def find_best_params(folds, n_folds, use_smote=False, remove_outliers=False):
         logger.info(f"  [{idx}/{len(hpo_folds)}] HPO fold: {fold_id}")
         X_train, y_train = load_xy(train_path)
         X_train, y_train = preprocess_train(X_train, y_train, use_smote, remove_outliers)
-        search = GridSearchCV(
+        search = RandomizedSearchCV(
             RandomForestClassifier(random_state=RANDOM_SEED, n_jobs=-1),
-            param_grid=HPO_PARAM_GRID,
+            param_distributions=HPO_PARAM_GRID,
+            n_iter=HPO_N_ITER,
             cv=HPO_CV,
             scoring="accuracy",
             n_jobs=-1,
+            random_state=RANDOM_SEED,
             verbose=0,
         )
         search.fit(X_train, y_train)
