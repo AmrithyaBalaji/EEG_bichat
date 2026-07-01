@@ -6,7 +6,10 @@ import pandas as pd
 from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import (
+    accuracy_score, confusion_matrix, classification_report,
+    precision_recall_fscore_support
+)
 from imblearn.over_sampling import SMOTE
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
@@ -58,7 +61,6 @@ def remove_outliers_iqr(X, y, k=OUTLIER_IQR_K):
     iqr = q3 - q1
     lower = q1 - k * iqr
     upper = q3 + k * iqr
-
 
     mask = np.all((X >= lower) & (X <= upper), axis=1)
     n_removed = (~mask).sum()
@@ -166,8 +168,7 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
 
     logger.info(f"\nPhase 2: Training all {len(folds)} folds with consensus params …")
     results = []
-    all_y_true = []
-    all_y_pred = []
+    pred_rows = []  # per-sample predictions across all folds, saved to disk
 
     for idx, (fold_id, train_path, test_path) in enumerate(folds, 1):
         logger.info(f"  [{idx}/{len(folds)}] Fold: {fold_id}")
@@ -181,32 +182,44 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
         y_pred = model.predict(X_test)
         test_acc = accuracy_score(y_test, y_pred)
         logger.info(f"    Test accuracy: {test_acc:.4f}")
-        results.append({"fold_id": fold_id, "test_accuracy": round(test_acc, 4)})
+        results.append({"fold_id": fold_id, "test_accuracy": round(test_acc, 4),
+                         "n_test": len(y_test)})
 
-        all_y_true.extend(y_test.tolist())
-        all_y_pred.extend(y_pred.tolist())
+        for yt, yp in zip(y_test.tolist(), y_pred.tolist()):
+            pred_rows.append({"fold_id": fold_id, "y_true": yt, "y_pred": yp})
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(os.path.join(run_dir, "loo_rf_results.csv"), index=False)
+
+    # Save every individual prediction so summaries can be regenerated later
+    # without retraining anything.
+    preds_df = pd.DataFrame(pred_rows)
+    preds_df.to_csv(os.path.join(run_dir, "all_fold_predictions.csv"), index=False)
 
     logger.info(f"\n{'='*50}")
     logger.info(f"LOO Results Summary  [{tag}]")
     logger.info(f"{'='*50}")
     logger.info(f"Consensus params : {best_params}")
+    logger.info(f"Number of folds  : {len(results_df)}")
     logger.info(f"Mean test accuracy : {results_df['test_accuracy'].mean():.4f}")
     logger.info(f"Std  test accuracy : {results_df['test_accuracy'].std():.4f}")
     logger.info(f"Min  test accuracy : {results_df['test_accuracy'].min():.4f}")
     logger.info(f"Max  test accuracy : {results_df['test_accuracy'].max():.4f}")
 
-    report_overall_confusion(all_y_true, all_y_pred, run_dir)
+    per_class_df = report_overall_confusion(preds_df["y_true"], preds_df["y_pred"], run_dir)
     plot_results(results_df, best_params, run_dir)
+    plot_per_class_metrics(per_class_df, run_dir, tag)
 
     return {
         "tag": tag,
         "use_smote": use_smote,
         "remove_outliers": remove_outliers,
+        "n_folds": len(results_df),
         "mean_test_accuracy": results_df["test_accuracy"].mean(),
         "std_test_accuracy": results_df["test_accuracy"].std(),
+        "overall_accuracy": accuracy_score(preds_df["y_true"], preds_df["y_pred"]),
+        "class0_recall": per_class_df.loc[per_class_df["class"] == 0, "recall"].values[0],
+        "class1_recall": per_class_df.loc[per_class_df["class"] == 1, "recall"].values[0],
         "best_params": best_params,
     }
 
@@ -238,9 +251,11 @@ def main():
 
 def report_overall_confusion(y_true, y_pred, output_dir):
     """
-    Build one confusion matrix from ALL folds combined, and report
-    class 0 and class 1 stats separately (counts + per-class accuracy/recall).
-    Assumes binary labels {0, 1}.
+    Build one confusion matrix from ALL folds/samples combined, and report
+    class 0 and class 1 stats separately: counts, accuracy, precision,
+    recall, F1, support. Assumes binary labels {0, 1}.
+
+    Returns the per-class summary DataFrame (also used for plotting).
     """
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
@@ -249,6 +264,16 @@ def report_overall_confusion(y_true, y_pred, output_dir):
     cm = confusion_matrix(y_true, y_pred, labels=labels)
     tn, fp, fn, tp = cm.ravel()
 
+    precision, recall, f1, support = precision_recall_fscore_support(
+        y_true, y_pred, labels=labels, zero_division=0
+    )
+
+    total_0 = tn + fp
+    total_1 = fn + tp
+    acc_0 = tn / total_0 if total_0 else float("nan")   # i.e. recall of class 0
+    acc_1 = tp / total_1 if total_1 else float("nan")   # i.e. recall of class 1
+    overall_acc = accuracy_score(y_true, y_pred)
+
     logger.info(f"\n{'='*50}")
     logger.info("Overall Confusion Matrix (all folds combined)")
     logger.info(f"{'='*50}")
@@ -256,57 +281,118 @@ def report_overall_confusion(y_true, y_pred, output_dir):
     logger.info(f"Actual 0   :     {tn:>10}   {fp:>11}")
     logger.info(f"Actual 1   :     {fn:>10}   {tp:>11}")
 
+    logger.info(f"\nOverall accuracy (all samples, all folds): {overall_acc:.4f}  (n={len(y_true)})")
 
-    total_0 = tn + fp
-    acc_0 = tn / total_0 if total_0 else float("nan")
-    logger.info(f"\nClass 0  -> total={total_0}, correct(TN)={tn}, misclassified as 1(FP)={fp}, accuracy={acc_0:.4f}")
-
-
-    total_1 = fn + tp
-    acc_1 = tp / total_1 if total_1 else float("nan")
-    logger.info(f"Class 1  -> total={total_1}, correct(TP)={tp}, misclassified as 0(FN)={fn}, accuracy={acc_1:.4f}")
+    logger.info(f"\nClass 0 (negative) -> total={total_0}, correct(TN)={tn}, "
+                f"misclassified as 1(FP)={fp}, accuracy/recall={acc_0:.4f}, "
+                f"precision={precision[0]:.4f}, F1={f1[0]:.4f}")
+    logger.info(f"Class 1 (positive) -> total={total_1}, correct(TP)={tp}, "
+                f"misclassified as 0(FN)={fn}, accuracy/recall={acc_1:.4f}, "
+                f"precision={precision[1]:.4f}, F1={f1[1]:.4f}")
 
     logger.info(f"\n{classification_report(y_true, y_pred, labels=labels, digits=4)}")
-
 
     cm_df = pd.DataFrame(cm, index=["Actual_0", "Actual_1"], columns=["Pred_0", "Pred_1"])
     cm_df.to_csv(os.path.join(output_dir, "overall_confusion_matrix.csv"))
 
     per_class_df = pd.DataFrame([
-        {"class": 0, "total": total_0, "correct": tn, "misclassified": fp, "accuracy": acc_0},
-        {"class": 1, "total": total_1, "correct": tp, "misclassified": fn, "accuracy": acc_1},
+        {"class": 0, "total": total_0, "correct": tn, "misclassified": fp,
+         "accuracy": acc_0, "precision": precision[0], "recall": recall[0], "f1": f1[0]},
+        {"class": 1, "total": total_1, "correct": tp, "misclassified": fn,
+         "accuracy": acc_1, "precision": precision[1], "recall": recall[1], "f1": f1[1]},
     ])
     per_class_df.to_csv(os.path.join(output_dir, "per_class_summary.csv"), index=False)
 
+    # Plain-text summary report, easy to skim or paste elsewhere
+    with open(os.path.join(output_dir, "summary_report.txt"), "w") as f:
+        f.write("RANDOM FOREST — LOO SUMMARY\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"Total samples evaluated : {len(y_true)}\n")
+        f.write(f"Overall accuracy         : {overall_acc:.4f}\n\n")
+        f.write(f"Class 0 — total={total_0}, correct={tn}, misclassified={fp}\n")
+        f.write(f"  accuracy/recall={acc_0:.4f}  precision={precision[0]:.4f}  f1={f1[0]:.4f}\n\n")
+        f.write(f"Class 1 — total={total_1}, correct={tp}, misclassified={fn}\n")
+        f.write(f"  accuracy/recall={acc_1:.4f}  precision={precision[1]:.4f}  f1={f1[1]:.4f}\n\n")
+        f.write("Confusion matrix\n")
+        f.write("                 Predicted 0   Predicted 1\n")
+        f.write(f"Actual 0   :     {tn:>10}   {fp:>11}\n")
+        f.write(f"Actual 1   :     {fn:>10}   {tp:>11}\n")
+
     plot_confusion_matrix(cm, labels, output_dir)
+
+    return per_class_df
 
 
 def plot_confusion_matrix(cm, labels, output_dir):
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(5, 4.5))
+    cm_pct = cm / cm.sum(axis=1, keepdims=True) * 100  # row-normalized %
+
+    fig, ax = plt.subplots(figsize=(5.5, 5))
     im = ax.imshow(cm, cmap="Blues")
 
     ax.set_xticks(range(len(labels)))
     ax.set_yticks(range(len(labels)))
-    ax.set_xticklabels([f"Pred {l}" for l in labels])
-    ax.set_yticklabels([f"Actual {l}" for l in labels])
-    ax.set_title("Overall Confusion Matrix (all folds)")
+    ax.set_xticklabels([f"Predicted {l}" for l in labels], fontsize=10)
+    ax.set_yticklabels([f"Actual {l}" for l in labels], fontsize=10)
+    ax.set_title("Overall Confusion Matrix (all folds combined)", fontsize=11, fontweight="bold")
 
     thresh = cm.max() / 2.0
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            ax.text(j, i, format(cm[i, j], "d"),
+            color = "white" if cm[i, j] > thresh else "black"
+            ax.text(j, i, f"{cm[i, j]:,d}\n({cm_pct[i, j]:.1f}%)",
                      ha="center", va="center",
-                     color="white" if cm[i, j] > thresh else "black",
-                     fontsize=14, fontweight="bold")
+                     color=color, fontsize=12, fontweight="bold")
 
-    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="Count")
     plt.tight_layout()
     path = os.path.join(output_dir, "overall_confusion_matrix.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
     logger.info(f"Confusion matrix plot saved → {path}")
+
+
+def plot_per_class_metrics(per_class_df, output_dir, tag=""):
+    """Grouped bar chart comparing accuracy/recall, precision, and F1
+    for class 0 vs class 1, so it's easy to see which class the model
+    struggles with."""
+    import matplotlib.pyplot as plt
+
+    metrics = ["accuracy", "precision", "f1"]
+    class0_vals = per_class_df.loc[per_class_df["class"] == 0, metrics].values.flatten()
+    class1_vals = per_class_df.loc[per_class_df["class"] == 1, metrics].values.flatten()
+
+    x = np.arange(len(metrics))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    bars0 = ax.bar(x - width/2, class0_vals, width, label="Class 0", color="#4C8BB5")
+    bars1 = ax.bar(x + width/2, class1_vals, width, label="Class 1", color="#E07B54")
+
+    for bars in (bars0, bars1):
+        for b in bars:
+            h = b.get_height()
+            ax.annotate(f"{h:.3f}", (b.get_x() + b.get_width()/2, h),
+                        textcoords="offset points", xytext=(0, 3),
+                        ha="center", fontsize=9, fontweight="bold")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(["Accuracy / Recall", "Precision", "F1-score"], fontsize=10)
+    ax.set_ylim(0, 1.15)
+    ax.set_ylabel("Score")
+    title = "Per-Class Performance: Class 0 vs Class 1"
+    if tag:
+        title += f"  [{tag}]"
+    ax.set_title(title, fontsize=11, fontweight="bold")
+    ax.legend()
+    ax.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    path = os.path.join(output_dir, "per_class_metrics.png")
+    plt.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close()
+    logger.info(f"Per-class metrics plot saved → {path}")
 
 
 def plot_results(results_df, best_params, output_dir):
@@ -330,7 +416,7 @@ def plot_results(results_df, best_params, output_dir):
     ax.set_xticks(x)
     ax.set_xticklabels(folds, rotation=90, fontsize=7)
     ax.set_ylabel("Test Accuracy")
-    ax.set_title("Per-Fold Test Accuracy (blue = above mean, orange = below)")
+    ax.set_title(f"Per-Fold Test Accuracy across {len(folds)} folds (blue = above mean, orange = below)")
     ax.legend(fontsize=9)
     ax.set_ylim(0, 1.05)
     ax.grid(axis="y", alpha=0.3)
