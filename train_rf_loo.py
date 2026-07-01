@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
 from sklearn.metrics import (
-    accuracy_score, confusion_matrix, classification_report,
+    accuracy_score, balanced_accuracy_score, confusion_matrix, classification_report,
     precision_recall_fscore_support
 )
 from imblearn.over_sampling import SMOTE
@@ -19,9 +19,10 @@ TRAIN_DIR  = r"C:\abalaji\bichat\PROCESSED_LOO\0"
 TEST_DIR   = r"C:\abalaji\bichat\PROCESSED_LOO\1"
 OUTPUT_DIR = r"C:\abalaji\bichat\PROCESSED_LOO\results"
 LABEL_COL    = "label"
-HPO_N_FOLDS  = 35
+HPO_N_FOLDS  = 25
 HPO_CV       = 5
-HPO_N_ITER   = 30  # how many random param combinations RandomizedSearchCV tries (out of 288 possible)
+HPO_N_ITER   = 25  # how many random param combinations RandomizedSearchCV tries
+HPO_SCORING  = "balanced_accuracy"  # matches Model 2's tuning objective
 RANDOM_SEED  = 42
 
 
@@ -33,11 +34,12 @@ RUN_BOTH_CONDITIONS = False
 OUTLIER_IQR_K        = 1.5
 
 HPO_PARAM_GRID = {
-    "n_estimators":      [200, 300, 500, 600],
-    "max_depth":         [None, 5, 10, 20],
+    "n_estimators":      [100, 200, 300, 500],
+    "max_depth":         [None, 10, 20, 30, 50],
     "min_samples_split": [2, 5, 10],
     "min_samples_leaf":  [1, 2, 4],
-    "max_features":      ["sqrt", "log2"],
+    "max_features":      ["sqrt", "log2", 0.3, 0.5],
+    "bootstrap":         [True, False],
 }
 
 
@@ -126,18 +128,25 @@ def find_best_params(folds, n_folds, use_smote=False, remove_outliers=False):
         logger.info(f"  [{idx}/{len(hpo_folds)}] HPO fold: {fold_id}")
         X_train, y_train = load_xy(train_path)
         X_train, y_train = preprocess_train(X_train, y_train, use_smote, remove_outliers)
+
+        cv = StratifiedKFold(n_splits=HPO_CV, shuffle=True, random_state=RANDOM_SEED)
+
         search = RandomizedSearchCV(
-            RandomForestClassifier(random_state=RANDOM_SEED, n_jobs=-1),
+            RandomForestClassifier(
+                class_weight="balanced",
+                random_state=RANDOM_SEED,
+                n_jobs=-1,
+            ),
             param_distributions=HPO_PARAM_GRID,
             n_iter=HPO_N_ITER,
-            cv=HPO_CV,
-            scoring="accuracy",
+            cv=cv,
+            scoring=HPO_SCORING,
             n_jobs=-1,
             random_state=RANDOM_SEED,
             verbose=0,
         )
         search.fit(X_train, y_train)
-        logger.info(f"    Best CV: {search.best_score_:.4f}  Params: {search.best_params_}")
+        logger.info(f"    Best CV ({HPO_SCORING}): {search.best_score_:.4f}  Params: {search.best_params_}")
         all_best_params.append(search.best_params_)
 
     param_keys = all_best_params[0].keys()
@@ -180,12 +189,19 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
 
         X_train, y_train = preprocess_train(X_train, y_train, use_smote, remove_outliers)
 
-        model = RandomForestClassifier(**best_params, random_state=RANDOM_SEED, n_jobs=-1)
+        model = RandomForestClassifier(
+            **best_params,
+            class_weight="balanced",
+            random_state=RANDOM_SEED,
+            n_jobs=-1,
+        )
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         test_acc = accuracy_score(y_test, y_pred)
-        logger.info(f"    Test accuracy: {test_acc:.4f}")
+        test_bal_acc = balanced_accuracy_score(y_test, y_pred)
+        logger.info(f"    Test accuracy: {test_acc:.4f}  Balanced accuracy: {test_bal_acc:.4f}")
         results.append({"fold_id": fold_id, "test_accuracy": round(test_acc, 4),
+                         "test_balanced_accuracy": round(test_bal_acc, 4),
                          "n_test": len(y_test)})
 
         for yt, yp in zip(y_test.tolist(), y_pred.tolist()):
@@ -194,8 +210,6 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
     results_df = pd.DataFrame(results)
     results_df.to_csv(os.path.join(run_dir, "loo_rf_results.csv"), index=False)
 
-    # Save every individual prediction so summaries can be regenerated later
-    # without retraining anything.
     preds_df = pd.DataFrame(pred_rows)
     preds_df.to_csv(os.path.join(run_dir, "all_fold_predictions.csv"), index=False)
 
@@ -208,6 +222,7 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
     logger.info(f"Std  test accuracy : {results_df['test_accuracy'].std():.4f}")
     logger.info(f"Min  test accuracy : {results_df['test_accuracy'].min():.4f}")
     logger.info(f"Max  test accuracy : {results_df['test_accuracy'].max():.4f}")
+    logger.info(f"Mean test balanced accuracy : {results_df['test_balanced_accuracy'].mean():.4f}")
 
     per_class_df = report_overall_confusion(preds_df["y_true"], preds_df["y_pred"], run_dir)
     plot_results(results_df, best_params, run_dir)
@@ -220,6 +235,7 @@ def run_pipeline(folds, use_smote, remove_outliers, output_dir):
         "n_folds": len(results_df),
         "mean_test_accuracy": results_df["test_accuracy"].mean(),
         "std_test_accuracy": results_df["test_accuracy"].std(),
+        "mean_test_balanced_accuracy": results_df["test_balanced_accuracy"].mean(),
         "overall_accuracy": accuracy_score(preds_df["y_true"], preds_df["y_pred"]),
         "class0_recall": per_class_df.loc[per_class_df["class"] == 0, "recall"].values[0],
         "class1_recall": per_class_df.loc[per_class_df["class"] == 1, "recall"].values[0],
@@ -276,6 +292,7 @@ def report_overall_confusion(y_true, y_pred, output_dir):
     acc_0 = tn / total_0 if total_0 else float("nan")   # i.e. recall of class 0
     acc_1 = tp / total_1 if total_1 else float("nan")   # i.e. recall of class 1
     overall_acc = accuracy_score(y_true, y_pred)
+    overall_bal_acc = balanced_accuracy_score(y_true, y_pred)
 
     logger.info(f"\n{'='*50}")
     logger.info("Overall Confusion Matrix (all folds combined)")
@@ -285,6 +302,7 @@ def report_overall_confusion(y_true, y_pred, output_dir):
     logger.info(f"Actual 1   :     {fn:>10}   {tp:>11}")
 
     logger.info(f"\nOverall accuracy (all samples, all folds): {overall_acc:.4f}  (n={len(y_true)})")
+    logger.info(f"Overall balanced accuracy: {overall_bal_acc:.4f}")
 
     logger.info(f"\nClass 0 (negative) -> total={total_0}, correct(TN)={tn}, "
                 f"misclassified as 1(FP)={fp}, accuracy/recall={acc_0:.4f}, "
@@ -306,12 +324,12 @@ def report_overall_confusion(y_true, y_pred, output_dir):
     ])
     per_class_df.to_csv(os.path.join(output_dir, "per_class_summary.csv"), index=False)
 
-    # Plain-text summary report, easy to skim or paste elsewhere
     with open(os.path.join(output_dir, "summary_report.txt"), "w") as f:
         f.write("RANDOM FOREST — LOO SUMMARY\n")
         f.write("=" * 50 + "\n")
         f.write(f"Total samples evaluated : {len(y_true)}\n")
-        f.write(f"Overall accuracy         : {overall_acc:.4f}\n\n")
+        f.write(f"Overall accuracy         : {overall_acc:.4f}\n")
+        f.write(f"Overall balanced accuracy: {overall_bal_acc:.4f}\n\n")
         f.write(f"Class 0 — total={total_0}, correct={tn}, misclassified={fp}\n")
         f.write(f"  accuracy/recall={acc_0:.4f}  precision={precision[0]:.4f}  f1={f1[0]:.4f}\n\n")
         f.write(f"Class 1 — total={total_1}, correct={tp}, misclassified={fn}\n")
