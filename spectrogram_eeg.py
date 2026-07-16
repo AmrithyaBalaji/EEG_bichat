@@ -7,7 +7,7 @@ from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
 from sklearn.metrics import balanced_accuracy_score, confusion_matrix
 from scipy.stats import randint
 
-BASE_PATH = Path(r"C:\abalaji\bichat\ORIGINAL_DATA\chunks_20")
+BASE_PATH = Path(r"D:\abalaji\chunks_20")
 LABEL_DIRS = {0: "0", 1: "1"}
 FS = 256
 NPERSEG = 512
