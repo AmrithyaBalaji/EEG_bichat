@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 from scipy.signal import spectrogram
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import LeaveOneGroupOut, RandomizedSearchCV, StratifiedKFold
+from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
 from sklearn.metrics import balanced_accuracy_score, confusion_matrix
 from scipy.stats import randint
 
@@ -14,6 +14,7 @@ NPERSEG = 512
 NOVERLAP = 256
 FREQ_MAX = 40
 N_TIME_BINS = 20
+RANDOM_STATE = 42
 
 
 def load_raw(path):
@@ -94,50 +95,69 @@ PARAM_DIST = {
 N_ITER = 30
 INNER_FOLDS = 5
 
-logo = LeaveOneGroupOut()
-n_folds = logo.get_n_splits(X, y, groups=patient_ids)
-print(f"starting LOGO CV: {n_folds} folds")
+# ---- patient-level label (each patient's chunks share one label) ----
+unique_patients = np.unique(patient_ids)
+patient_label = {}
+for pid in unique_patients:
+    labels_for_patient = y[patient_ids == pid]
+    assert len(np.unique(labels_for_patient)) == 1, f"patient {pid} has mixed labels"
+    patient_label[pid] = labels_for_patient[0]
 
-chunk_true, chunk_pred = [], []
+alive_patients = [pid for pid in unique_patients if patient_label[pid] == 0]
+dead_patients = [pid for pid in unique_patients if patient_label[pid] == 1]
+print(f"total patients: {len(unique_patients)} (alive={len(alive_patients)}, dead={len(dead_patients)})")
+
+# --- choose test patients ---
+# Option A: hardcode explicit IDs for reproducibility/control
+TEST_PATIENTS = None  # e.g. ["patient_003", "patient_017", "patient_022", "patient_009"]
+
+if TEST_PATIENTS is None:
+    rng = np.random.RandomState(RANDOM_STATE)
+    test_alive = rng.choice(alive_patients, size=3, replace=False).tolist()
+    test_dead = rng.choice(dead_patients, size=1, replace=False).tolist()
+    TEST_PATIENTS = test_alive + test_dead
+
+print("test patients:", TEST_PATIENTS)
+for pid in TEST_PATIENTS:
+    print(f"  {pid}: label={patient_label[pid]}, n_chunks={(patient_ids == pid).sum()}")
+
+test_mask = np.isin(patient_ids, TEST_PATIENTS)
+train_mask = ~test_mask
+
+X_train, y_train, train_ids = X[train_mask], y[train_mask], patient_ids[train_mask]
+X_test, y_test, test_ids = X[test_mask], y[test_mask], patient_ids[test_mask]
+print(f"train: {X_train.shape}, patients={len(np.unique(train_ids))}")
+print(f"test:  {X_test.shape}, patients={len(np.unique(test_ids))}")
+
+base_rf = RandomForestClassifier(class_weight="balanced", random_state=RANDOM_STATE, n_jobs=-1)
+search = RandomizedSearchCV(
+    base_rf,
+    PARAM_DIST,
+    n_iter=N_ITER,
+    scoring="balanced_accuracy",
+    cv=StratifiedKFold(INNER_FOLDS, shuffle=True, random_state=RANDOM_STATE),
+    random_state=RANDOM_STATE,
+    n_jobs=-1,
+)
+print("running hyperparameter search...")
+search.fit(X_train, y_train)
+best_rf = search.best_estimator_
+print("best params:", search.best_params_)
+print("best inner CV balanced accuracy:", search.best_score_)
+
+chunk_pred = best_rf.predict(X_test)
+chunk_true = y_test
+
 patient_true, patient_pred = [], []
-
-for fold_i, (train_idx, test_idx) in enumerate(logo.split(X, y, groups=patient_ids)):
-    X_train, y_train = X[train_idx], y[train_idx]
-    X_test, y_test = X[test_idx], y[test_idx]
-    held_out_patient = patient_ids[test_idx][0]
-    print(f"\nfold {fold_i+1}/{n_folds}: held-out patient {held_out_patient}, train={len(train_idx)}, test={len(test_idx)}")
-
-    base_rf = RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1)
-    search = RandomizedSearchCV(
-        base_rf,
-        PARAM_DIST,
-        n_iter=N_ITER,
-        scoring="balanced_accuracy",
-        cv=StratifiedKFold(INNER_FOLDS, shuffle=True, random_state=42),
-        random_state=42,
-        n_jobs=-1,
-    )
-    print("running hyperparameter search...")
-    search.fit(X_train, y_train)
-    best_rf = search.best_estimator_
-    print("best params:", search.best_params_)
-    print("best inner CV balanced accuracy:", search.best_score_)
-
-    preds = best_rf.predict(X_test)
-    chunk_true.extend(y_test)
-    chunk_pred.extend(preds)
-
+for pid in TEST_PATIENTS:
+    pid_mask = test_ids == pid
+    true_label = y_test[pid_mask][0]
+    preds = chunk_pred[pid_mask]
     majority_vote = 1 if preds.sum() > len(preds) / 2 else 0
-    true_label = y_test[0]
     patient_true.append(true_label)
     patient_pred.append(majority_vote)
+    print(f"patient {pid} true={int(true_label)} pred={majority_vote} chunk_acc={(preds == y_test[pid_mask]).mean():.3f}")
 
-    print(f"fold {fold_i} patient {held_out_patient} true={int(true_label)} pred={majority_vote} chunk_acc={(preds == y_test).mean():.3f}")
-
-print("\nLOGO CV complete, computing final metrics...")
-
-chunk_true = np.array(chunk_true)
-chunk_pred = np.array(chunk_pred)
 patient_true = np.array(patient_true)
 patient_pred = np.array(patient_pred)
 
