@@ -49,10 +49,13 @@ def chunk_spectrogram_tensor(arr):
 
 
 def build_features():
+    print("building features from raw CSVs...")
     X_flat, X_tensor, labels, patient_ids = [], [], [], []
     for label, subdir in LABEL_DIRS.items():
         folder = BASE_PATH / subdir
-        for path in sorted(folder.glob("*.csv")):
+        files = sorted(folder.glob("*.csv"))
+        print(f"label {label}: {len(files)} files in {folder}")
+        for path in files:
             arr = load_raw(path)
             tensor, file_label = chunk_spectrogram_tensor(arr)
             X_tensor.append(tensor)
@@ -73,9 +76,11 @@ def build_features():
 
 flat_path = Path("spectrogram_features_flat.npy")
 if flat_path.exists():
+    print("loading cached features from disk...")
     X = np.load(flat_path)
     y = np.load("spectrogram_labels.npy")
     patient_ids = np.load("spectrogram_patient_ids.npy")
+    print("loaded:", X.shape, "labels:", y.shape, "patients:", len(np.unique(patient_ids)))
 else:
     X, y, patient_ids = build_features()
 
@@ -90,6 +95,9 @@ N_ITER = 30
 INNER_FOLDS = 5
 
 logo = LeaveOneGroupOut()
+n_folds = logo.get_n_splits(X, y, groups=patient_ids)
+print(f"starting LOGO CV: {n_folds} folds")
+
 chunk_true, chunk_pred = [], []
 patient_true, patient_pred = [], []
 
@@ -97,6 +105,7 @@ for fold_i, (train_idx, test_idx) in enumerate(logo.split(X, y, groups=patient_i
     X_train, y_train = X[train_idx], y[train_idx]
     X_test, y_test = X[test_idx], y[test_idx]
     held_out_patient = patient_ids[test_idx][0]
+    print(f"\nfold {fold_i+1}/{n_folds}: held-out patient {held_out_patient}, train={len(train_idx)}, test={len(test_idx)}")
 
     base_rf = RandomForestClassifier(class_weight="balanced", random_state=42, n_jobs=-1)
     search = RandomizedSearchCV(
@@ -108,8 +117,11 @@ for fold_i, (train_idx, test_idx) in enumerate(logo.split(X, y, groups=patient_i
         random_state=42,
         n_jobs=-1,
     )
+    print("running hyperparameter search...")
     search.fit(X_train, y_train)
     best_rf = search.best_estimator_
+    print("best params:", search.best_params_)
+    print("best inner CV balanced accuracy:", search.best_score_)
 
     preds = best_rf.predict(X_test)
     chunk_true.extend(y_test)
@@ -121,6 +133,8 @@ for fold_i, (train_idx, test_idx) in enumerate(logo.split(X, y, groups=patient_i
     patient_pred.append(majority_vote)
 
     print(f"fold {fold_i} patient {held_out_patient} true={int(true_label)} pred={majority_vote} chunk_acc={(preds == y_test).mean():.3f}")
+
+print("\nLOGO CV complete, computing final metrics...")
 
 chunk_true = np.array(chunk_true)
 chunk_pred = np.array(chunk_pred)
