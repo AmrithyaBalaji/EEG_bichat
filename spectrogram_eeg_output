@@ -1,0 +1,28 @@
+(venv_train) PS D:\abalaji\EEG_bichat> python .\spectrogram_eeg.py
+loading cached features from disk...
+loaded: (1900, 25920) labels: (1900,) patients: 95
+total patients: 95 (alive=70, dead=25)
+test patients: ['8201', '1214', '8556', '8064']
+  8201: label=0, n_chunks=20
+  1214: label=0, n_chunks=20
+  8556: label=0, n_chunks=20
+  8064: label=1, n_chunks=20
+train: (1820, 25920), patients=91
+test:  (80, 25920), patients=4
+running hyperparameter search...
+best params: {'max_depth': 6, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 10, 'n_estimators': 445}
+best inner CV balanced accuracy: 0.7199160447761194
+patient 8201 true=0 pred=0 chunk_acc=0.950
+patient 1214 true=0 pred=0 chunk_acc=1.000
+patient 8556 true=0 pred=0 chunk_acc=0.850
+patient 8064 true=1 pred=0 chunk_acc=0.050
+
+chunk-level balanced accuracy: 0.4916666666666667
+chunk-level confusion matrix:
+ [[56  4]
+ [19  1]]
+
+patient-level balanced accuracy: 0.5
+patient-level confusion matrix:
+ [[3 0]
+ [1 0]]
