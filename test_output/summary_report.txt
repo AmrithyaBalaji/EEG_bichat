@@ -1,0 +1,16 @@
+RANDOM FOREST — LOO SUMMARY
+==================================================
+Total samples evaluated : 1900
+Overall accuracy         : 0.9721
+Overall balanced accuracy: 0.9663
+
+Class 0 — total=1400, correct=1370, misclassified=30
+  accuracy/recall=0.9786  precision=0.9835  f1=0.9810
+
+Class 1 — total=500, correct=477, misclassified=23
+  accuracy/recall=0.9540  precision=0.9408  f1=0.9474
+
+Confusion matrix
+                 Predicted 0   Predicted 1
+Actual 0   :           1370            30
+Actual 1   :             23           477
